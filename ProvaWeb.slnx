@@ -1,5 +1,8 @@
 <Solution>
   <Folder Name="/backend/">
     <Project Path="backend/ProvaWeb.Api/ProvaWeb.Api.csproj" />
+    <Project Path="backend/ProvaWeb.Application/ProvaWeb.Application.csproj" />
+    <Project Path="backend/ProvaWeb.Domain/ProvaWeb.Domain.csproj" />
+    <Project Path="backend/ProvaWeb.Infrastructure/ProvaWeb.Infrastructure.csproj" />
   </Folder>
 </Solution>
