@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using ProvaWeb.Application.Interfaces;
+using ProvaWeb.Application.Servicos;
 using ProvaWeb.Infrastructure.Persistencia;
+using ProvaWeb.Infrastructure.Repositorios;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +16,11 @@ builder.Services.AddDbContext<ProvaWebDbContext>(options =>
     options.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection")
     ));
+
+
+builder.Services.AddScoped<IProcessoRepository, ProcessoRepository>();
+builder.Services.AddScoped<ProcessoService>();
+
 
 var app = builder.Build();
 
