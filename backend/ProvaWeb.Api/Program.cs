@@ -20,7 +20,8 @@ builder.Services.AddDbContext<ProvaWebDbContext>(options =>
 
 builder.Services.AddScoped<IProcessoRepository, ProcessoRepository>();
 builder.Services.AddScoped<ProcessoService>();
-
+builder.Services.AddScoped<IParteRepository, ParteRepository>();
+builder.Services.AddScoped<ParteService>();
 
 var app = builder.Build();
 
