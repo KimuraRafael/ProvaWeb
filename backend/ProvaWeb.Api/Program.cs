@@ -22,6 +22,8 @@ builder.Services.AddScoped<IProcessoRepository, ProcessoRepository>();
 builder.Services.AddScoped<ProcessoService>();
 builder.Services.AddScoped<IParteRepository, ParteRepository>();
 builder.Services.AddScoped<ParteService>();
+builder.Services.AddScoped<IMovimentacaoRepository, MovimentacaoRepository>();
+builder.Services.AddScoped<MovimentacaoService>();
 
 var app = builder.Build();
 
