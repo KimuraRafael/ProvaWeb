@@ -1,26 +1,9 @@
 import {useEffect, useState} from "react";
-
-type Processo = {
-    id: string;
-    numero: string;
-    assunto: string;
-    dataCriacao: string;
-    status: number;
-};
-
-type Parte = {
-    id: string;
-    nome: string;
-    tipoParte: number;
-    processoId: string;
-};
-
-type Movimentacao = {
-    id: string;
-    dataMovimentacao: string;
-    descricao: string;
-    processoId: string;
-};
+import type {Processo, Parte, Movimentacao} from "./types";
+import {processoService} from "./servicos/processoService";
+import ProcessoList from "./componentes/ProcessoList";
+import ProcessoForm from "./componentes/ProcessoForm";
+import ProcessoDetalhes from "./componentes/ProcessoDetalhes";
 
 
 function App() {
@@ -37,39 +20,36 @@ function App() {
     const [descricaoMovimentacao, setDescricaoMovimentacao] = useState("");
 
     useEffect(() => {
-        fetch("http://localhost:5166/api/processo")
-            .then((response) => response.json())
-            .then((data) => setProcessos(data));
+        processoService
+            .listar()
+            .then(setProcessos)
+            .catch(console.error);
     }, []);
 
     async function criarProcesso(e: React.FormEvent) {
         e.preventDefault();
 
-        const response = await fetch(
-            "http://localhost:5166/api/processo",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    numero: numero,
-                    assunto: assunto,
-                }),
-            }
-        );
+        try {
+            const novoProcesso =
+                await processoService.criar(
+                    numero,
+                    assunto
+                );
 
-        if (!response.ok) {
-            console.error("Erro ao criar processo");
-            return;
+            setProcessos((atuais) => [
+                ...atuais,
+                novoProcesso
+            ]);
+
+            setNumero("");
+            setAssunto("");
+
+        } catch (erro) {
+            console.error(
+                "Erro ao criar processo",
+                erro
+            );
         }
-
-        const novoProcesso: Processo = await response.json();
-
-        setProcessos([...processos, novoProcesso]);
-
-        setNumero("");
-        setAssunto("");
     }
 
     function iniciarEdicao(processo: Processo) {
@@ -84,87 +64,93 @@ function App() {
 
         if (!idEditando) return;
 
-        const response = await fetch(
-            `http://localhost:5166/api/processo/${idEditando}`,
-            {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
+        try {
+            const processoAtualizado =
+                await processoService.atualizar(
+                    idEditando,
                     numero,
                     assunto,
-                    status,
-                }),
+                    status
+                );
+
+            setProcessos((atuais) =>
+                atuais.map((processo) =>
+                    processo.id === idEditando
+                        ? processoAtualizado
+                        : processo
+                )
+            );
+
+            if (processoSelecionado?.id === idEditando) {
+                setProcessoSelecionado(processoAtualizado);
             }
-        );
 
-        if (!response.ok) {
-            console.error("Erro ao atualizar processo");
-            return;
+            setIdEditando(null);
+            setNumero("");
+            setAssunto("");
+            setStatus(1);
+
+        } catch (erro) {
+            console.error(
+                "Erro ao atualizar processo",
+                erro
+            );
         }
-
-        const processoAtualizado: Processo = await response.json();
-
-        setProcessos(
-            processos.map((processo) =>
-                processo.id === idEditando
-                    ? processoAtualizado
-                    : processo
-            )
-        );
-
-        setIdEditando(null);
-        setNumero("");
-        setAssunto("");
-        setStatus(1);
     }
 
     async function excluirProcesso(id: string) {
-        const response = await fetch(
-            `http://localhost:5166/api/processo/${id}`,
-            {
-                method: "DELETE",
+        try {
+            await processoService.excluir(id);
+
+            setProcessos((atuais) =>
+                atuais.filter(
+                    (processo) => processo.id !== id
+                )
+            );
+
+            if (processoSelecionado?.id === id) {
+                setProcessoSelecionado(null);
+                setPartes([]);
+                setMovimentacoes([]);
             }
-        );
 
+            if (idEditando === id) {
+                setIdEditando(null);
+                setNumero("");
+                setAssunto("");
+                setStatus(1);
+            }
 
-        if (!response.ok) {
-            console.error("Erro ao excluir processo");
-            return;
+        } catch (erro) {
+            console.error(
+                "Erro ao excluir processo",
+                erro
+            );
         }
-
-        setProcessos(
-            processos.filter((processo) => processo.id !== id)
-        );
     }
 
     async function abrirProcesso(processo: Processo) {
         setProcessoSelecionado(processo);
 
-        const response = await fetch(
-            `http://localhost:5166/api/processo/${processo.id}/parte`
-        );
+        setPartes([]);
+        setMovimentacoes([]);
 
-        if (!response.ok) {
-            console.error("Erro ao carregar partes");
-            return;
+        try {
+            const [partesCarregadas, movimentacoesCarregadas] =
+                await Promise.all([
+                    processoService.listarPartes(processo.id),
+                    processoService.listarMovimentacoes(processo.id)
+                ]);
+
+            setPartes(partesCarregadas);
+            setMovimentacoes(movimentacoesCarregadas);
+
+        } catch (erro) {
+            console.error(
+                "Erro ao carregar detalhes",
+                erro
+            );
         }
-
-        const responseMovimentacoes = await fetch(
-            `http://localhost:5166/api/processo/${processo.id}/movimentacoes`
-        );
-
-        if (responseMovimentacoes.ok) {
-            const dataMovimentacoes: Movimentacao[] =
-                await responseMovimentacoes.json();
-
-            setMovimentacoes(dataMovimentacoes);
-        }
-
-        const data: Parte[] = await response.json();
-
-        setPartes(data);
     }
 
     async function adicionarParte(e: React.FormEvent) {
@@ -172,219 +158,131 @@ function App() {
 
         if (!processoSelecionado) return;
 
-        const response = await fetch(
-            `http://localhost:5166/api/processo/${processoSelecionado.id}/parte`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    nome: nomeParte,
-                    tipoParte: tipoParte,
-                }),
-            }
-        );
+        try {
+            const novaParte =
+                await processoService.adicionarParte(
+                    processoSelecionado.id,
+                    nomeParte,
+                    tipoParte
+                );
 
-        if (!response.ok) {
-            console.error("Erro ao adicionar parte");
-            return;
+            setPartes((atuais) => [
+                ...atuais,
+                novaParte
+            ]);
+
+            setNomeParte("");
+            setTipoParte(1);
+
+        } catch (erro) {
+            console.error(
+                "Erro ao adicionar parte",
+                erro
+            );
         }
-
-        const novaParte: Parte = await response.json();
-
-        setPartes([...partes, novaParte]);
-
-        setNomeParte("");
-        setTipoParte(1);
     }
 
 
     async function excluirParte(parteId: string) {
         if (!processoSelecionado) return;
 
-        const response = await fetch(
-            `http://localhost:5166/api/processo/${processoSelecionado.id}/parte/${parteId}`,
-            {
-                method: "DELETE",
-            }
-        );
+        try {
+            await processoService.excluirParte(
+                processoSelecionado.id,
+                parteId
+            );
 
-        if (!response.ok) {
-            console.error("Erro ao excluir parte");
-            return;
+            setPartes((atuais) =>
+                atuais.filter(
+                    (parte) => parte.id !== parteId
+                )
+            );
+
+        } catch (erro) {
+            console.error(
+                "Erro ao excluir parte",
+                erro
+            );
         }
-
-        setPartes(
-            partes.filter((parte) => parte.id !== parteId)
-        );
     }
 
-    async function adicionarMovimentacao(e: React.FormEvent) {
+    async function adicionarMovimentacao(
+        e: React.FormEvent
+    ) {
         e.preventDefault();
 
         if (!processoSelecionado) return;
 
-        const response = await fetch(
-            `http://localhost:5166/api/processo/${processoSelecionado.id}/movimentacoes`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    descricao: descricaoMovimentacao,
-                }),
-            }
-        );
+        try {
+            const novaMovimentacao =
+                await processoService.adicionarMovimentacao(
+                    processoSelecionado.id,
+                    descricaoMovimentacao
+                );
 
-        if (!response.ok) {
-            console.error("Erro ao adicionar movimentação");
-            return;
+            setMovimentacoes((atuais) => [
+                novaMovimentacao,
+                ...atuais
+            ]);
+
+            setDescricaoMovimentacao("");
+
+        } catch (erro) {
+            console.error(
+                "Erro ao adicionar movimentação",
+                erro
+            );
         }
-
-        const novaMovimentacao: Movimentacao = await response.json();
-
-        setMovimentacoes([
-            novaMovimentacao,
-            ...movimentacoes
-        ]);
-
-        setDescricaoMovimentacao("");
     }
-    
+
 
     return (
         <main>
             <h1>Processos</h1>
 
+            <ProcessoForm
+                numero={numero}
+                assunto={assunto}
+                status={status}
+                editando={idEditando !== null}
 
-            <form onSubmit={idEditando ? atualizarProcesso : criarProcesso}>
+                onNumeroChange={setNumero}
+                onAssuntoChange={setAssunto}
+                onStatusChange={setStatus}
 
-                <select
-                    value={status}
-                    onChange={(e) => setStatus(Number(e.target.value))}
-                >
-                    <option value={1}>Ativo</option>
-                    <option value={2}>Finalizado</option>
-                    <option value={3}>Arquivado</option>
-                </select>
+                onSubmit={
+                    idEditando
+                        ? atualizarProcesso
+                        : criarProcesso
+                }
+            />
 
-                <input
-                    type="text"
-                    placeholder="Número do processo"
-                    value={numero}
-                    onChange={(e) => setNumero(e.target.value)}
-                />
+            <ProcessoList
+                processos={processos}
+                onAbrir={abrirProcesso}
+                onEditar={iniciarEdicao}
+                onExcluir={excluirProcesso}
+            />
 
-                <input
-                    type="text"
-                    placeholder="Assunto"
-                    value={assunto}
-                    onChange={(e) => setAssunto(e.target.value)}
-                />
-
-                <button type="submit">
-                    {idEditando ? "Salvar alterações" : "Criar processo"}
-                </button>
-
-            </form>
-
-
-            {processos.map((processo) => (
-                <div key={processo.id}>
-                    <strong>{processo.numero}</strong>
-                    <p>{processo.assunto}</p>
-
-                    <button onClick={() => abrirProcesso(processo)}>
-                        Abrir
-                    </button>
-                    <button onClick={() => iniciarEdicao(processo)}>
-                        Editar
-                    </button>
-                    <button onClick={() => excluirProcesso(processo.id)}>
-                        Excluir
-                    </button>
-                </div>
-            ))}
-
-          
             {processoSelecionado && (
-                <section>
-                    <h3>Partes</h3>
+                <ProcessoDetalhes
+                    processo={processoSelecionado}
 
-                    <form onSubmit={adicionarParte}>
-                        <input
-                            type="text"
-                            placeholder="Nome da parte"
-                            value={nomeParte}
-                            onChange={(e) => setNomeParte(e.target.value)}
-                        />
+                    partes={partes}
+                    nomeParte={nomeParte}
+                    tipoParte={tipoParte}
 
-                        <select
-                            value={tipoParte}
-                            onChange={(e) => setTipoParte(Number(e.target.value))}
-                        >
-                            <option value={1}>Parte Interessada</option>
-                            <option value={2}>Parte Contrária</option>
-                        </select>
+                    movimentacoes={movimentacoes}
+                    descricaoMovimentacao={descricaoMovimentacao}
 
-                        <button type="submit">
-                            Adicionar parte
-                        </button>
-                    </form>
-                    <br></br>
-                    <h2>Detalhes do Processo</h2>
-                    
-                    <h3>Partes Relacionadas</h3>
-                 
-                    {partes.map((parte) => (
-                        <div key={parte.id}>
-                            <br></br>
-                            <strong>{parte.nome}</strong>
+                    onNomeParteChange={setNomeParte}
+                    onTipoParteChange={setTipoParte}
+                    onAdicionarParte={adicionarParte}
+                    onExcluirParte={excluirParte}
 
-                            <p>
-                                {parte.tipoParte === 1
-                                    ? "Parte Interessada"
-                                    : "Parte Contrária"}
-                            </p>
-
-                            <button onClick={() => excluirParte(parte.id)}>
-                                Remover parte
-                            </button>
-                        </div>
-                    ))}
-
-                    <h3>Movimentações</h3>
-
-                    <form onSubmit={adicionarMovimentacao}>
-                        <input
-                            type="text"
-                            placeholder="Descrição da movimentação"
-                            value={descricaoMovimentacao}
-                            onChange={(e) =>
-                                setDescricaoMovimentacao(e.target.value)
-                            }
-                        />
-
-                        <button type="submit">
-                            Adicionar movimentação
-                        </button>
-                    </form>
-
-                    {movimentacoes.map((movimentacao) => (
-                        <div key={movimentacao.id}>
-                            <br></br>
-                            <strong>
-                                {new Date(
-                                    movimentacao.dataMovimentacao
-                                ).toLocaleString("pt-BR")}
-                            </strong>
-
-                            <p>{movimentacao.descricao}</p>
-                        </div>
-                    ))}
-                </section>
+                    onDescricaoMovimentacaoChange={setDescricaoMovimentacao}
+                    onAdicionarMovimentacao={adicionarMovimentacao}
+                />
             )}
         </main>
     );
