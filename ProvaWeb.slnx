@@ -4,5 +4,6 @@
     <Project Path="backend/ProvaWeb.Application/ProvaWeb.Application.csproj" />
     <Project Path="backend/ProvaWeb.Domain/ProvaWeb.Domain.csproj" />
     <Project Path="backend/ProvaWeb.Infrastructure/ProvaWeb.Infrastructure.csproj" />
+    <Project Path="backend/ProvaWeb.Tests/ProvaWeb.Tests.csproj" />
   </Folder>
 </Solution>

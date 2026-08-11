@@ -6,7 +6,7 @@ public class MovimentacaoRequest
 {
     
     [Required]
-    public String Descricao { get;  set; }
+    public String Descricao { get;  set; } = string.Empty;
 
     public DateTime DataMovimentacao { get; set; } =  DateTime.UtcNow;
 }
