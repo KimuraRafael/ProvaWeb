@@ -1,4 +1,5 @@
 import type { FormEvent } from "react";
+import "./ProcessoDetalhes.css";
 
 type Processo = {
     id: string;
@@ -56,90 +57,194 @@ function ProcessoDetalhes({
                               onAdicionarMovimentacao
                           }: Props) {
 
+    const partesInteressadas = partes.filter(
+        (parte) => parte.tipoParte === 1
+    );
+
+    const partesContrarias = partes.filter(
+        (parte) => parte.tipoParte === 2
+    );
+
     return (
-        <section>
-            <h2>Detalhes do Processo</h2>
+        <section className="details-container">
 
-            <strong>{processo.numero}</strong>
-            <p>{processo.assunto}</p>
+            <div className="details-header">
+                <div>
+                    <span className="eyebrow">
+                        Processo selecionado
+                    </span>
 
-            <h3>Partes</h3>
+                    <h2>{processo.numero}</h2>
 
-            <form onSubmit={onAdicionarParte}>
-                <input
-                    type="text"
-                    placeholder="Nome da parte"
-                    value={nomeParte}
-                    onChange={(e) =>
-                        onNomeParteChange(e.target.value)
-                    }
-                />
+                    <p>{processo.assunto}</p>
+                </div>
+            </div>
 
-                <select
-                    value={tipoParte}
-                    onChange={(e) =>
-                        onTipoParteChange(Number(e.target.value))
-                    }
-                >
-                    <option value={1}>Parte Interessada</option>
-                    <option value={2}>Parte Contrária</option>
-                </select>
+            <div className="details-grid">
 
-                <button type="submit">
-                    Adicionar parte
-                </button>
-            </form>
+                <div className="details-card">
 
-            <h3>Partes Relacionadas</h3>
+                    <h3>Partes envolvidas</h3>
 
-            {partes.map((parte) => (
-                <div key={parte.id}>
-                    <strong>{parte.nome}</strong>
-
-                    <p>
-                        {parte.tipoParte === 1
-                            ? "Parte Interessada"
-                            : "Parte Contrária"}
-                    </p>
-
-                    <button
-                        onClick={() => onExcluirParte(parte.id)}
+                    <form
+                        className="parte-form"
+                        onSubmit={onAdicionarParte}
                     >
-                        Remover parte
-                    </button>
+                        <input
+                            type="text"
+                            placeholder="Nome da parte"
+                            value={nomeParte}
+                            onChange={(e) =>
+                                onNomeParteChange(e.target.value)
+                            }
+                        />
+
+                        <select
+                            value={tipoParte}
+                            onChange={(e) =>
+                                onTipoParteChange(
+                                    Number(e.target.value)
+                                )
+                            }
+                        >
+                            <option value={1}>
+                                Parte Interessada
+                            </option>
+
+                            <option value={2}>
+                                Parte Contrária
+                            </option>
+                        </select>
+
+                        <button
+                            className="btn btn-primary"
+                            type="submit"
+                        >
+                            Adicionar
+                        </button>
+                    </form>
+
+                    <div className="partes-groups">
+
+                        <div>
+                            <span className="group-title interested">
+                                Interessadas
+                            </span>
+
+                            {partesInteressadas.length === 0 && (
+                                <p className="empty-message">
+                                    Nenhuma parte interessada.
+                                </p>
+                            )}
+
+                            {partesInteressadas.map((parte) => (
+                                <div
+                                    className="parte-item"
+                                    key={parte.id}
+                                >
+                                    <span>{parte.nome}</span>
+
+                                    <button
+                                        onClick={() =>
+                                            onExcluirParte(parte.id)
+                                        }
+                                    >
+                                        Remover
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div>
+                            <span className="group-title contrary">
+                                Contrárias
+                            </span>
+
+                            {partesContrarias.length === 0 && (
+                                <p className="empty-message">
+                                    Nenhuma parte contrária.
+                                </p>
+                            )}
+
+                            {partesContrarias.map((parte) => (
+                                <div
+                                    className="parte-item"
+                                    key={parte.id}
+                                >
+                                    <span>{parte.nome}</span>
+
+                                    <button
+                                        onClick={() =>
+                                            onExcluirParte(parte.id)
+                                        }
+                                    >
+                                        Remover
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+
+                    </div>
+
                 </div>
-            ))}
 
-            <h3>Movimentações</h3>
 
-            <form onSubmit={onAdicionarMovimentacao}>
-                <input
-                    type="text"
-                    placeholder="Descrição da movimentação"
-                    value={descricaoMovimentacao}
-                    onChange={(e) =>
-                        onDescricaoMovimentacaoChange(
-                            e.target.value
-                        )
-                    }
-                />
+                <div className="details-card">
 
-                <button type="submit">
-                    Adicionar movimentação
-                </button>
-            </form>
+                    <h3>Histórico de movimentações</h3>
 
-            {movimentacoes.map((movimentacao) => (
-                <div key={movimentacao.id}>
-                    <strong>
-                        {new Date(
-                            movimentacao.dataMovimentacao
-                        ).toLocaleString("pt-BR")}
-                    </strong>
+                    <form
+                        className="movement-form"
+                        onSubmit={onAdicionarMovimentacao}
+                    >
+                        <textarea
+                            rows={3}
+                            placeholder="Descrição da movimentação"
+                            value={descricaoMovimentacao}
+                            onChange={(e) =>
+                                onDescricaoMovimentacaoChange(
+                                    e.target.value
+                                )
+                            }
+                        />
 
-                    <p>{movimentacao.descricao}</p>
+                        <button
+                            className="btn btn-primary"
+                            type="submit"
+                        >
+                            Adicionar movimentação
+                        </button>
+                    </form>
+
+                    <div className="timeline">
+
+                        {movimentacoes.length === 0 && (
+                            <p className="empty-message">
+                                Nenhuma movimentação registrada.
+                            </p>
+                        )}
+
+                        {movimentacoes.map((movimentacao) => (
+                            <div
+                                className="timeline-item"
+                                key={movimentacao.id}
+                            >
+                                <span className="timeline-date">
+                                    {new Date(
+                                        movimentacao.dataMovimentacao
+                                    ).toLocaleString("pt-BR")}
+                                </span>
+
+                                <p>{movimentacao.descricao}</p>
+                            </div>
+                        ))}
+
+                    </div>
+
                 </div>
-            ))}
+
+            </div>
+
         </section>
     );
 }

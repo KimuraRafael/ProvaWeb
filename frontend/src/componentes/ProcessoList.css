@@ -1,0 +1,212 @@
+/* =========================
+   CABEÇALHO DO KANBAN
+   ========================= */
+
+.kanban-section {
+    width: 100%;
+}
+
+.kanban-title {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+
+    margin-bottom: 20px;
+}
+
+.kanban-title h1 {
+    margin: 4px 0 0;
+
+    color: #172033;
+    font-size: 28px;
+}
+
+.total-processes {
+    color: var(--color-text-secondary);
+    font-size: 14px;
+}
+
+
+/* =========================
+   BOARD
+   ========================= */
+
+.kanban-board {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    gap: 18px;
+
+    align-items: start;
+}
+
+.kanban-column {
+    min-height: 340px;
+
+    padding: 14px;
+
+    background: #dce3eb;
+
+    border: 1px solid #d3dbe5;
+    border-radius: 12px;
+}
+
+
+/* =========================
+   CABEÇALHO DA COLUNA
+   ========================= */
+
+.kanban-column-header {
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    padding: 4px 4px 14px;
+}
+
+.kanban-column-header h2 {
+    margin: 0;
+
+    color: #334155;
+
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.status-dot {
+    width: 9px;
+    height: 9px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+}
+
+.status-active {
+    background: #3b82f6;
+}
+
+.status-finished {
+    background: #5f8ebd;
+}
+
+.status-archived {
+    background: #7c8798;
+}
+
+.process-count {
+    margin-left: auto;
+
+    min-width: 28px;
+    padding: 4px 8px;
+
+    text-align: center;
+
+    background: #cbd5e1;
+    color: #475569;
+
+    border-radius: 999px;
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+/* =========================
+   CARDS
+   ========================= */
+
+.kanban-cards {
+    display: flex;
+    flex-direction: column;
+
+    gap: 12px;
+}
+
+.process-card {
+    padding: 18px;
+
+    background: var(--color-surface);
+
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+
+    box-shadow: var(--shadow-sm);
+
+    transition:
+            transform 0.15s ease,
+            box-shadow 0.15s ease;
+}
+
+.process-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.process-number {
+    display: block;
+
+    margin-bottom: 7px;
+
+    color: var(--color-primary);
+
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.process-card h3 {
+    margin: 0 0 14px;
+
+    color: var(--color-text);
+
+    font-size: 16px;
+}
+
+.process-date {
+    display: block;
+
+    color: var(--color-text-secondary);
+    font-size: 12px;
+}
+
+.process-actions {
+    display: flex;
+    flex-wrap: wrap;
+
+    gap: 7px;
+
+    margin-top: 18px;
+}
+
+
+/* =========================
+   ESTADO VAZIO
+   ========================= */
+
+.empty-column {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    min-height: 150px;
+
+    color: #8290a3;
+
+    font-size: 13px;
+}
+
+
+/* =========================
+   RESPONSIVIDADE
+   ========================= */
+
+@media (max-width: 900px) {
+    .kanban-board {
+        grid-template-columns: 1fr;
+    }
+
+    .kanban-column {
+        min-height: auto;
+    }
+}
