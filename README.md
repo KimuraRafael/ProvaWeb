@@ -1,21 +1,53 @@
+[README_ProvaWeb.md](https://github.com/user-attachments/files/30922887/README_ProvaWeb.md)
 # ProvaWeb — Sistema de Gestão de Processos
 
-Aplicação web desenvolvida como desafio técnico para cadastro e acompanhamento de processos, partes envolvidas e seus respectivos andamentos.
+Aplicação web desenvolvida como desafio técnico Full Stack para cadastro e acompanhamento de processos, partes envolvidas e seus respectivos andamentos.
 
-> **Status:** em desenvolvimento.
+O projeto foi construído com foco em **separação de responsabilidades**, **clareza de código**, **experiência de uso** e **facilidade de execução**, utilizando uma API REST em .NET, frontend React e PostgreSQL.
 
-## Sobre o projeto
+## Visão geral
 
-O sistema tem como objetivo permitir o gerenciamento completo de processos jurídicos ou administrativos, incluindo:
+O sistema permite acompanhar o ciclo de vida de processos jurídicos ou administrativos através de uma interface em formato Kanban.
 
-- cadastro, consulta, edição e exclusão de processos;
-- vínculo de partes interessadas e partes contrárias;
-- inclusão e consulta do histórico de andamentos;
-- exibição dos andamentos do mais recente para o mais antigo;
-- validação dos dados enviados à API;
-- tratamento padronizado de erros e respostas HTTP.
+Cada processo pode possuir:
 
-## Tecnologias
+- partes interessadas;
+- partes contrárias;
+- movimentações;
+- status de acompanhamento.
+
+Os status disponíveis são:
+
+- **Ativo**
+- **Finalizado**
+- **Arquivado**
+
+Além da edição tradicional, o status de um processo pode ser alterado diretamente no Kanban por **Drag & Drop**.
+
+---
+
+## Funcionalidades implementadas
+
+- [x] Criar processo
+- [x] Listar processos
+- [x] Consultar detalhes de um processo
+- [x] Editar processo
+- [x] Excluir processo
+- [x] Alterar status do processo
+- [x] Alterar status por Drag & Drop no Kanban
+- [x] Adicionar parte a um processo
+- [x] Remover parte de um processo
+- [x] Separar partes interessadas e contrárias
+- [x] Adicionar movimentação
+- [x] Exibir movimentações da mais recente para a mais antiga
+- [x] Buscar processos por número ou assunto
+- [x] Filtrar processos por status
+- [x] Testes automatizados
+- [x] Execução completa com Docker Compose
+
+---
+
+## Tecnologias utilizadas
 
 ### Backend
 
@@ -23,6 +55,7 @@ O sistema tem como objetivo permitir o gerenciamento completo de processos jurí
 - .NET 10
 - ASP.NET Core Web API
 - Entity Framework Core
+- Npgsql
 - PostgreSQL
 
 ### Frontend
@@ -30,162 +63,424 @@ O sistema tem como objetivo permitir o gerenciamento completo de processos jurí
 - React
 - TypeScript
 - Vite
-- ESLint
+- CSS
 
-### Ferramentas
+### Testes
+
+- xUnit
+
+### Infraestrutura
+
+- Docker
+- Docker Compose
+- Nginx
+
+### Ferramentas utilizadas durante o desenvolvimento
 
 - JetBrains Rider
-- Git e GitHub
-- Docker e Docker Compose *(planejado)*
-- Testes automatizados *(planejado)*
+- Visual Studio Code
+- Git
+- GitHub
+- Postman
+- DBeaver
 
-## Arquitetura
+---
 
-O projeto possui separação entre a API e a aplicação frontend:
+# Arquitetura
 
-```text
-ProvaWeb/
-├── backend/
-│   └── ProvaWeb.Api/
-│       ├── Controllers/
-│       ├── Data/
-│       ├── DTOs/
-│       ├── Entities/
-│       ├── Enums/
-│       ├── Exceptions/
-│       ├── Repositories/
-│       ├── Services/
-│       ├── Program.cs
-│       └── appsettings.json
-├── frontend/
-│   ├── public/
-│   ├── src/
-│   ├── package.json
-│   └── vite.config.ts
-├── ProvaWeb.slnx
-└── README.md
-```
-
-A comunicação entre frontend e backend será realizada por meio de requisições HTTP e respostas em JSON.
-
-## Modelagem inicial
+O backend foi separado em projetos com responsabilidades distintas.
 
 ```text
-Processo 1 ───── N Parte
-Processo 1 ───── N Andamento
+backend/
+├── ProvaWeb.Api/
+├── ProvaWeb.Application/
+├── ProvaWeb.Domain/
+├── ProvaWeb.Infrastructure/
+└── ProvaWeb.Tests/
 ```
 
-### Processo
+## ProvaWeb.Domain
+
+Contém as entidades e comportamentos principais do domínio.
+
+Exemplos:
+
+- `Processo`
+- `Parte`
+- `MovimentacaoProcesso`
+- enums relacionados aos status e tipos
+
+A entidade `Processo`, por exemplo, é responsável por manter seus próprios dados e comportamentos, como atualização das informações e alteração de status.
+
+## ProvaWeb.Application
+
+Contém a lógica responsável por coordenar os casos de uso da aplicação.
+
+Nessa camada estão:
+
+- serviços;
+- DTOs de entrada e saída;
+- interfaces de repositório.
+
+O `ProcessoService`, por exemplo, recebe os dados vindos da API, trabalha com a entidade de domínio e utiliza a abstração `IProcessoRepository` para persistência.
+
+## ProvaWeb.Infrastructure
+
+Responsável pela implementação da persistência.
+
+Nesta camada estão:
+
+- `ProvaWebDbContext`;
+- repositórios;
+- configurações do Entity Framework Core;
+- migrations.
+
+A Application depende apenas das interfaces de repositório, enquanto a Infrastructure fornece suas implementações concretas.
+
+## ProvaWeb.Api
+
+Camada responsável pela comunicação HTTP.
+
+Nela ficam:
+
+- controllers;
+- configuração da aplicação;
+- injeção de dependência;
+- configuração do Entity Framework;
+- CORS;
+- inicialização da API.
+
+## ProvaWeb.Tests
+
+Projeto separado para os testes automatizados das regras de domínio e dos serviços da aplicação.
+
+---
+
+# Organização do frontend
+
+O frontend também foi separado para evitar concentrar todas as responsabilidades no `App.tsx`.
+
+```text
+frontend/src/
+├── componentes/
+├── servicos/
+├── types.ts
+├── App.tsx
+└── ...
+```
+
+## Componentes
+
+Responsáveis pela interface e interação com o usuário.
+
+Entre os componentes criados estão:
+
+- listagem/Kanban de processos;
+- formulário de processo;
+- detalhes do processo;
+- filtros de pesquisa.
+
+## Camada de serviços
+
+A comunicação HTTP com a API foi centralizada em uma camada própria de serviços.
+
+Dessa forma, os componentes não precisam conhecer detalhes de `fetch`, URLs ou métodos HTTP.
+
+O fluxo fica semelhante a:
+
+```text
+Componente React
+      ↓
+processoService
+      ↓
+API REST
+      ↓
+Application
+      ↓
+Repository
+      ↓
+PostgreSQL
+```
+
+---
+
+# Modelagem
+
+A aplicação trabalha com três entidades principais.
+
+```text
+Processo
+├── 1:N Parte
+└── 1:N MovimentacaoProcesso
+```
+
+## Processo
+
+Representa o item principal acompanhado pelo sistema.
+
+Campos utilizados:
 
 - identificador;
 - número do processo;
 - assunto;
-- descrição;
 - data de criação;
-- status: Ativo, Finalizado ou Arquivado.
+- status.
 
-### Parte
+## Parte
+
+Representa uma pessoa ou entidade vinculada ao processo.
+
+Campos:
 
 - identificador;
 - nome;
-- tipo: Interessada ou Contrária;
+- tipo da parte;
 - processo vinculado.
 
-### Andamento
+Tipos disponíveis:
+
+- Interessada
+- Contrária
+
+## Movimentação
+
+Representa um acontecimento registrado no histórico de um processo.
+
+Campos:
 
 - identificador;
-- data do andamento;
 - descrição;
+- data da movimentação;
 - processo vinculado.
 
-## Pré-requisitos
+As movimentações são apresentadas da mais recente para a mais antiga.
 
-Antes de executar o projeto, instale:
+---
 
-- [.NET SDK 10](https://dotnet.microsoft.com/download);
-- [Node.js LTS](https://nodejs.org/);
-- [PostgreSQL](https://www.postgresql.org/download/);
-- Git.
+# Decisões de implementação
 
-Verifique as instalações:
+## Kanban para acompanhamento dos processos
 
-```bash
-dotnet --version
-node --version
-npm --version
-git --version
-```
-
-## Como executar o projeto
-
-### 1. Clone o repositório
-
-```bash
-git clone <URL_DO_REPOSITORIO>
-cd ProvaWeb
-```
-
-### 2. Configure o banco de dados
-
-Crie um banco PostgreSQL para a aplicação:
-
-```sql
-CREATE DATABASE provaweb;
-```
-
-Configure a connection string no arquivo:
+A listagem foi organizada em três colunas:
 
 ```text
-backend/ProvaWeb.Api/appsettings.Development.json
+Ativos | Finalizados | Arquivados
 ```
 
-Exemplo:
+Essa abordagem permite identificar rapidamente a situação dos processos sem depender apenas de uma tabela tradicional.
 
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Host=localhost;Port=5432;Database=provaweb;Username=postgres;Password=SUA_SENHA"
-  }
-}
+Além disso, os cards podem ser arrastados entre as colunas.
+
+Ao realizar o Drag & Drop:
+
+```text
+Card
+ ↓
+Nova coluna
+ ↓
+Atualização do status
+ ↓
+PUT na API
+ ↓
+Persistência no PostgreSQL
 ```
 
-> Não envie senhas reais para o GitHub. Para produção ou ambientes compartilhados, utilize variáveis de ambiente ou User Secrets.
+A alteração também continua disponível através da edição tradicional do processo.
 
-### 3. Execute as migrations
+## Tela de detalhes
 
-A partir da pasta do backend:
+A visualização das informações de um processo foi separada da tela principal.
+
+Ao selecionar **Visualizar**, é aberto um diálogo contendo:
+
+- informações do processo;
+- partes interessadas;
+- partes contrárias;
+- formulário para inclusão de partes;
+- histórico de movimentações;
+- inclusão de novas movimentações.
+
+Essa decisão mantém o Kanban como uma visão geral e concentra as informações detalhadas somente quando necessário.
+
+## Filtros no frontend
+
+A busca e o filtro utilizam os processos já carregados pela aplicação.
+
+É possível filtrar por:
+
+- número do processo;
+- assunto;
+- status.
+
+A filtragem ocorre diretamente no frontend, evitando requisições adicionais para a API nesse cenário.
+
+## Persistência
+
+O PostgreSQL foi utilizado como banco relacional por se adequar naturalmente aos relacionamentos entre:
+
+- Processo;
+- Parte;
+- Movimentação.
+
+O Entity Framework Core é responsável pelo mapeamento das entidades e acesso aos dados.
+
+As alterações de estrutura do banco são versionadas através de migrations.
+
+## Migrations no Docker
+
+Durante a inicialização da API, as migrations pendentes do Entity Framework Core são aplicadas automaticamente.
+
+Isso permite subir a aplicação em um ambiente novo sem precisar executar manualmente:
 
 ```bash
-cd backend/ProvaWeb.Api
 dotnet ef database update
 ```
 
-Caso a ferramenta do Entity Framework ainda não esteja instalada:
+---
 
-```bash
-dotnet tool install --global dotnet-ef
+# Testes automatizados
+
+Os testes foram implementados utilizando **xUnit**.
+
+Atualmente existem testes de domínio e aplicação.
+
+## Testes de domínio
+
+Cobrem comportamentos da entidade `Processo`, como:
+
+- criação de processo com status inicial `Ativo`;
+- atualização de número e assunto;
+- alteração de status.
+
+## Testes da Application
+
+O `ProcessoService` é testado isoladamente da infraestrutura.
+
+Para isso foi criada uma implementação fake de `IProcessoRepository`, permitindo testar os fluxos sem depender de PostgreSQL ou Entity Framework.
+
+Exemplo do fluxo testado:
+
+```text
+ProcessoService
+      ↓
+IProcessoRepository
+      ↓
+Repository Fake
+      ↓
+List<Processo>
 ```
 
-### 4. Execute o backend
+Foram implementados testes para:
 
-Ainda na pasta `backend/ProvaWeb.Api`:
+- criação;
+- busca de processo inexistente;
+- atualização;
+- remoção.
+
+Para executar os testes:
+
+```bash
+dotnet test
+```
+
+---
+
+# Executando com Docker
+
+Esta é a forma recomendada para executar o projeto.
+
+## Pré-requisitos
+
+- Docker
+- Docker Compose
+
+## 1. Clone o repositório
+
+```bash
+git clone https://github.com/KimuraRafael/ProvaWeb.git
+cd ProvaWeb
+```
+
+## 2. Suba a aplicação
+
+```bash
+docker compose up --build
+```
+
+O Docker Compose irá iniciar três serviços:
+
+```text
+provaweb-frontend
+provaweb-api
+provaweb-postgres
+```
+
+A comunicação ocorre da seguinte forma:
+
+```text
+Browser
+  ↓
+React + Nginx
+  ↓
+ASP.NET Core API
+  ↓
+PostgreSQL
+```
+
+## Endereços
+
+| Serviço | Endereço |
+|---|---|
+| Frontend | http://localhost:5173 |
+| API | http://localhost:5166 |
+| PostgreSQL | localhost:5432 |
+
+Acesse:
+
+```text
+http://localhost:5173
+```
+
+## Encerrando os containers
+
+```bash
+docker compose down
+```
+
+Para também remover os dados armazenados no volume do PostgreSQL:
+
+```bash
+docker compose down -v
+```
+
+---
+
+# Executando sem Docker
+
+Também é possível executar os projetos separadamente durante o desenvolvimento.
+
+## Pré-requisitos
+
+- .NET SDK 10
+- Node.js
+- PostgreSQL
+- Git
+
+## Backend
+
+Configure a connection string `DefaultConnection` de acordo com sua instância PostgreSQL.
+
+Depois, na raiz do repositório:
 
 ```bash
 dotnet restore
-dotnet run
+dotnet build
+dotnet run --project backend/ProvaWeb.Api
 ```
 
-A URL utilizada pela API será exibida no terminal.
+## Frontend
 
-A documentação Swagger poderá ser acessada em:
-
-```text
-<URL_DA_API>/swagger
-```
-
-### 5. Execute o frontend
-
-Em outro terminal, a partir da raiz do projeto:
+Em outro terminal:
 
 ```bash
 cd frontend
@@ -193,82 +488,137 @@ npm install
 npm run dev
 ```
 
-O Vite exibirá o endereço local da aplicação, normalmente:
+O Vite será iniciado normalmente em:
 
 ```text
 http://localhost:5173
 ```
 
-## Funcionalidades previstas
+---
 
-- [ ] Criar processo
-- [ ] Listar processos
-- [ ] Consultar detalhes de um processo
-- [ ] Editar processo
-- [ ] Excluir processo
-- [ ] Adicionar parte a um processo
-- [ ] Remover parte de um processo
-- [ ] Adicionar andamento
-- [ ] Ordenar andamentos por data decrescente
-- [ ] Validar dados de entrada
-- [ ] Padronizar respostas de erro
-- [ ] Adicionar filtros e paginação
-- [ ] Criar testes automatizados
-- [ ] Disponibilizar execução com Docker Compose
+# Principais endpoints
 
-## Endpoints planejados
+## Processos
 
 | Método | Endpoint | Descrição |
 |---|---|---|
-| `GET` | `/api/processos` | Lista os processos |
-| `GET` | `/api/processos/{id}` | Consulta os detalhes de um processo |
-| `POST` | `/api/processos` | Cadastra um processo |
-| `PUT` | `/api/processos/{id}` | Atualiza um processo |
-| `DELETE` | `/api/processos/{id}` | Exclui um processo |
-| `POST` | `/api/processos/{id}/partes` | Adiciona uma parte |
-| `DELETE` | `/api/processos/{processoId}/partes/{parteId}` | Remove uma parte |
-| `POST` | `/api/processos/{id}/andamentos` | Adiciona um andamento |
+| `GET` | `/api/processo` | Lista os processos |
+| `GET` | `/api/processo/{id}` | Busca um processo |
+| `POST` | `/api/processo` | Cria um processo |
+| `PUT` | `/api/processo/{id}` | Atualiza um processo |
+| `DELETE` | `/api/processo/{id}` | Remove um processo |
 
-> Os endpoints poderão ser ajustados durante o desenvolvimento.
+## Partes
 
-## Scripts do frontend
+| Método | Endpoint | Descrição |
+|---|---|---|
+| `GET` | `/api/processo/{id}/parte` | Lista as partes do processo |
+| `POST` | `/api/processo/{id}/parte` | Adiciona uma parte |
+| `DELETE` | `/api/processo/{id}/parte/{parteId}` | Remove uma parte |
+
+## Movimentações
+
+| Método | Endpoint | Descrição |
+|---|---|---|
+| `GET` | `/api/processo/{id}/movimentacoes` | Lista as movimentações |
+| `POST` | `/api/processo/{id}/movimentacoes` | Adiciona uma movimentação |
+
+---
+
+# Scripts do frontend
+
+## Ambiente de desenvolvimento
 
 ```bash
 npm run dev
 ```
 
-Inicia o servidor de desenvolvimento.
+## Build de produção
 
 ```bash
 npm run build
 ```
 
-Gera o build de produção.
+## Análise estática
 
 ```bash
 npm run lint
 ```
 
-Executa a análise estática do código.
+## Preview do build
 
 ```bash
 npm run preview
 ```
 
-Executa localmente uma prévia do build de produção.
+---
 
-## Boas práticas adotadas
+# Docker
+
+A aplicação utiliza imagens separadas para frontend e backend.
+
+## Backend
+
+O Dockerfile da API utiliza build multi-stage:
+
+```text
+.NET SDK
+  ↓
+restore
+  ↓
+publish
+  ↓
+ASP.NET Runtime
+```
+
+Isso evita carregar todo o SDK na imagem final.
+
+## Frontend
+
+O frontend também utiliza build multi-stage:
+
+```text
+Node.js
+  ↓
+npm install
+  ↓
+Vite build
+  ↓
+Nginx
+```
+
+O Nginx é responsável por servir os arquivos estáticos gerados pelo Vite.
+
+## PostgreSQL
+
+O PostgreSQL utiliza volume Docker para persistência dos dados.
+
+Também existe um `healthcheck` para garantir que a API aguarde o banco estar pronto para aceitar conexões antes de iniciar.
+
+---
+
+# Boas práticas adotadas
 
 - separação entre frontend e backend;
-- uso de DTOs para entrada e saída de dados;
-- validação dos dados recebidos;
-- separação de responsabilidades;
-- migrations para versionamento do banco de dados;
-- tratamento padronizado de exceções;
-- nomenclatura clara e consistente;
+- separação de responsabilidades no backend;
+- uso de DTOs;
+- Repository Pattern;
+- injeção de dependência;
+- abstração da persistência através de interfaces;
+- Entity Framework Core;
+- migrations;
+- programação assíncrona;
+- testes automatizados;
+- Docker multi-stage;
+- healthcheck do PostgreSQL;
+- camada de serviços no frontend;
+- componentes reutilizáveis;
+- filtros client-side;
 - commits pequenos e descritivos.
 
-## Autor
+---
+
+# Autor
 
 **Rafael Kimura dos Santos**
 
