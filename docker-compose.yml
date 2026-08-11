@@ -2,14 +2,50 @@ services:
   postgres:
     image: postgres:17
     container_name: provaweb-postgres
+
     environment:
       POSTGRES_DB: provaweb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+
     ports:
       - "5432:5432"
+
     volumes:
       - provaweb_data:/var/lib/postgresql/data
+
+
+  api:
+    build:
+      context: .
+      dockerfile: backend/ProvaWeb.Api/Dockerfile
+
+    container_name: provaweb-api
+
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: Host=postgres;Port=5432;Database=provaweb;Username=postgres;Password=postgres
+
+    ports:
+      - "5166:8080"
+
+    depends_on:
+      - postgres
+
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+
+    container_name: provaweb-frontend
+
+    ports:
+      - "5173:80"
+
+    depends_on:
+      - api
+
 
 volumes:
   provaweb_data:
